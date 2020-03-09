@@ -1,15 +1,21 @@
 # Base.@irrational log2π 1.8378770664093454836 log(big(2.)*π)
 
+function homogenize(t::Tuple)
+    T = promote_type(typeof(t).parameters...)
+    Tuple{Vararg{T}}(t)
+end
+
 
 # Discrete distributions
 for (D, P) in [(:Categorical, Tuple{Vararg{Real}}),
                (:Poisson, Tuple{Real})]
-    @eval struct $D{T<:Integer, P} <: Distribution{T,P}
+    @eval struct $D{T<:Integer, P<:$P} <: Distribution{T,P}
         params :: P
-        $D{T}(params::$P) where T = new{T,typeof(params)}(params)
     end
-    @eval $D{T}(params...) where T = $D{T}(params)
-    # @eval $D(params...) =
+    @eval function $D(ps...)
+        params = homogenize(ps)
+        $D{Int64, typeof(params)}(params)
+    end
 end
 
 
@@ -18,11 +24,14 @@ for (D, P) in [(:Uniform, Tuple{Real,Real}),
                (:Normal, Tuple{Real,Real}),
                (:Exponential, Tuple{Real}),
                (:Gamma, Tuple{Real,Real})]
-    @eval struct $D{T<:Real, P} <: Distribution{T,P}
+    @eval struct $D{T<:Real, P<:$P} <: Distribution{T,P}
         params :: P
-        $D{T}(params::$P) where T = new{T,typeof(params)}(params)
     end
-    @eval $D{T}(params...) where T = $D{T}(params)
+    @eval function $D(ps...)
+        params = homogenize(ps)
+        T = eltype(params)
+        $D{T, typeof(params)}(params)
+    end
 end
 
 
@@ -42,15 +51,11 @@ function rand(d::Categorical{I}) where I<:Integer
     max(i, one(I))
 end
 
-function logpdf(d::Categorical{I}, i::I) where I
-    p = params(d)
-    ifelse(one(I) ≤ i ≤ length(p), @inbounds log(p[i]), -typeof(p)(Inf))
-end
+categorical_logpdf(i::I, p::Real...) where I =
+    ifelse(one(I) ≤ i ≤ length(p), @inbounds log(p[i]), -eltype(p)(Inf))
 
-function _logpdf(d::Categorical{I}, i::I) where I
-    p = params(d)
-    ifelse(one(I) ≤ i ≤ length(p), @inbounds CUDAnative.log(p[i]), -typeof(p)(Inf))
-end
+_categorical_logpdf(i::I, p::Real...) where I =
+    ifelse(one(I) ≤ i ≤ length(p), @inbounds CUDAnative.log(p[i]), -eltype(p)(Inf))
 
 
 # Poisson
@@ -60,11 +65,9 @@ function rand(d::Poisson{I}) where I
     convert(I, poisinvcdf(λ, rand()))
 end
 
-logpdf(d::Poisson{I}, i::I) where I = poislogpdf(params(d), i)
+poisson_logpdf(i::Integer, λ::Real) = poislogpdf(λ, i)
 
-function _logpdf(d::Poisson{I}, i::I) where I
-    λ = params(d)
-    T = typeof(λ)
+function _poisson_logpdf(i::Integer, λ::T) where T<:Real
     x = convert(T, i)
     iszero(λ) && return ifelse(iszero(x), zero(T), -T(Inf))
     x * CUDAnative.log(λ) - λ - CUDAnative.lgamma(x + one(T))
@@ -77,15 +80,11 @@ function rand(d::Uniform{T}) where T
     a + (b - a)rand(T)
 end
 
-function logpdf(d::Uniform{T}, x::T) where T
-    a::T, b::T = params(d)
-    ifelse(a ≤ x ≤ b, -log(b - a), -T(Inf))
-end
+uniform_logpdf(x, a::T, b::T) where T =
+    ifelse(a ≤ T(x) ≤ b, -log(b - a), -T(Inf))
 
-function _logpdf(d::Uniform{T}, x::T) where T
-    a::T, b::T = params(d)
-    ifelse(a ≤ x ≤ b, -CUDAnative.log(b - a), -T(Inf))
-end
+_uniform_logpdf(x, a::T, b::T) where T =
+    ifelse(a ≤ T(x) ≤ b, -CUDAnative.log(b - a), -T(Inf))
 
 
 # Normal
@@ -94,16 +93,14 @@ function rand(d::Normal{T}) where T
     μ + σ * randn(T)
 end
 
-function logpdf(d::Normal{T}, x) where T
-    μ, σ = params(d)
-    iszero(σ) && return ifelse(x == μ, T(Inf), -T(Inf))
-    -(((x - μ) / σ)^2 + T(log2π))/2 - log(σ)
+function normal_logpdf(x, μ::T, σ::T) where T
+    iszero(σ) && return ifelse(T(x) == μ, T(Inf), -T(Inf))
+    -(((T(x) - μ) / σ)^2 + T(log2π))/2 - log(σ)
 end
 
-function _logpdf(d::Normal{T}, x) where T
-    μ, σ = params(d)
-    iszero(σ) && return ifelse(x == μ, T(Inf), -T(Inf))
-    -(((x - μ) / σ)^2 + T(log2π))/2 - CUDAnative.log(σ)
+function _normal_logpdf(x, μ::T, σ::T) where T
+    iszero(σ) && return ifelse(T(x) == μ, T(Inf), -T(Inf))
+    -(((T(x) - μ) / σ)^2 + T(log2π))/2 - CUDAnative.log(σ)
 end
 
 
@@ -113,15 +110,11 @@ function rand(d::Exponential{T}) where T
     λ * randexp(T)
 end
 
-function logpdf(d::Exponential{T}, x::T) where T
-    λ::T = params(d)
-    ifelse(x < zero(T), -T(Inf), log(λ) - λ * x)
-end
+exponential_logpdf(x, λ::T) where T =
+    ifelse(x < zero(x), -T(Inf), log(λ) - λ * T(x))
 
-function _logpdf(d::Exponential{T}, x::T) where T
-    λ::T = params(d)
-    ifelse(x < zero(T), -T(Inf), CUDAnative.log(λ) - λ * x)
-end
+_exponential_logpdf(x, λ::T) where T =
+    ifelse(x < zero(x), -T(Inf), CUDAnative.log(λ) - λ * T(x))
 
 
 # Gamma
@@ -155,12 +148,8 @@ function rand(d::Gamma{T}) where T
 end
 
 # TODO eliminar dependencia de StatsFuns:
-function logpdf(d::Gamma{T}, x::T) where T
-    α::T, θ::T = params(d)
+gamma_logpdf(x, α::T, θ::T) where T =
     gammalogpdf(α, θ, x)
-end
 
-function _logpdf(d::Gamma{T}, x::T) where T
-    α::T, θ::T = params(d)
-    -CUDAnative.lgamma(α) - α*CUDAnative.log(θ) + (α-one(T))*CUDAnative.log(x) - x/θ
-end
+_gamma_logpdf(x, α::T, θ::T) where T =
+    -CUDAnative.lgamma(α) - α*CUDAnative.log(θ) + (α-one(T))CUDAnative.log(T(x)) - T(x)/θ

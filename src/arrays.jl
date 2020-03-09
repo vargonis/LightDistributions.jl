@@ -17,16 +17,14 @@ function rand(d::Dirichlet{N,F,T}) where {N,F,T}
     p / sum(p)
 end
 
-function logpdf(d::Dirichlet, x::AbstractVector{F}) where F
-    α = F.(params(d))
+function dirichlet_logpdf(x::AbstractVector, α::AbstractVector)
     a, b = sum(u -> SVector(u,loggamma(u)), α)
-    s = sum((u,v) -> (u-one(F)log(v)), zip(α,x))
+    s = sum(((u,v) -> (u-one(u))log(v)).(α, x))
     s - b + loggamma(a)
 end
 
-function _logpdf(d::Dirichlet, x::AbstractVector{F}) where F
-    α = F.(params(d))
+function _dirichlet_logpdf(x::AbstractVector, α::AbstractVector)
     a, b = sum(u -> SVector(u,CUDAnative.lgamma(u)), α)
-    s = sum((u,v) -> (u-one(F)CUDAnative.log(v)), zip(α,x))
+    s = sum(((u,v) -> (u-one(u))CUDAnative.log(v)).(α, x))
     s - b + CUDAnative.lgamma(a)
 end
