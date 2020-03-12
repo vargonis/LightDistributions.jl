@@ -1,7 +1,7 @@
 # Dirichlet
 struct Dirichlet{P<:Tuple{Vararg{Real}}} <: Distribution{AbstractVector{Real},P}
     params :: P
-    Dirichlet(; p) = new{typeof(p)}(p)
+    Dirichlet(; α) = new{typeof(α)}(α)
 end
 
 # Dirichlet(α::Real...) = Dirichlet(α)
