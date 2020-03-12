@@ -1,45 +1,71 @@
 module LightDistributions
 
 using Random
-using StatsFuns: log2π, poisinvcdf, poislogpdf, gammalogpdf
-using SpecialFunctions: loggamma
+using StatsFuns: poisinvcdf
 using StaticArrays
 using CUDAnative
 using CuArrays
 
-import Base: rand
-export Distribution
-export Categorical, Poisson, Uniform, Normal, Exponential, Gamma
-export Dirichlet
-export params, logpdf
+# TODO extend Base.rand instead of defining own random
+# import Base: rand
 
+include("specfuns.jl")
+
+
+############################
+# Distribution generalities
+############################
+
+const _distributions = (
+    :Categorical, :Poisson,
+    :Uniform, :Normal, :Exponential, :Gamma,
+    :Dirichlet
+)
+const _params = (
+    Categorical = NamedTuple{(:p,), Tuple{Tuple{Vararg{Real}}}},
+    Poisson     = NamedTuple{(:λ,), Tuple{Real}},
+    Uniform     = NamedTuple{(:a,:b), Tuple{Real,Real}},
+    Normal      = NamedTuple{(:μ,:σ), Tuple{Real,Real}},
+    Exponential = NamedTuple{(:λ,), Tuple{Real}},
+    Gamma       = NamedTuple{(:k,:θ), Tuple{Real,Real}},
+    Dirichlet   = NamedTuple{(:α,), Tuple{Tuple{Vararg{Real}}}}
+)
+
+export Distribution
+export sample, random, params, logpdf
+for s in _distributions
+    @eval export $s
+end
 
 abstract type Distribution{T,P} end
 
 Base.eltype(::Distribution{T}) where T = T
 Base.eltype(::Type{<:Distribution{T}}) where T = T
+
 params(d::Distribution) = d.params
+
+###############################
+# Distribution implementations
+###############################
+
+function homogenize(t::Tuple)
+    T = promote_type(typeof(t).parameters...)
+    Tuple{Vararg{T}}(t)
+end
 
 include("scalars.jl")
 include("arrays.jl")
 
+for D in _distributions
+    @eval params(::Type{<:$D}) = $(_params[D])
+    @eval logpdf(::Type{<:$D}) = $(Symbol(:logpdf,D))
+    @eval sample(::Type{<:$D}) = $(Symbol(:rand, D))
+    @eval random(d::$D) = $(Symbol(:rand, D))(d.params...)
+end
 
-logpdf(d::Distribution, x) = logpdf(typeof(d))(x, params(d)...)
-logpdf(::Type{<:Categorical}) = categorical_logpdf
-logpdf(::Type{<:Poisson}) = poisson_logpdf
-logpdf(::Type{<:Uniform}) = uniform_logpdf
-logpdf(::Type{<:Normal}) = normal_logpdf
-logpdf(::Type{<:Exponential}) = exponential_logpdf
-logpdf(::Type{<:Gamma}) = gamma_logpdf
-logpdf(::Type{<:Dirichlet}) = dirichlet_logpdf
-
-CuArrays.@cufunc categorical_logpdf(args...) = _categorical_logpdf(args...)
-CuArrays.@cufunc poisson_logpdf(args...) = _poisson_logpdf(args...)
-CuArrays.@cufunc uniform_logpdf(args...) = _uniform_logpdf(args...)
-CuArrays.@cufunc normal_logpdf(args...) = _normal_logpdf(args...)
-CuArrays.@cufunc exponential_logpdf(args...) = _exponential_logpdf(args...)
-CuArrays.@cufunc gamma_logpdf(args...) = _gamma_logpdf(args...)
-CuArrays.@cufunc dirichlet_logpdf(args...) = _dirichlet_logpdf(args...)
+for D in _distributions
+    @eval CuArrays.@cufunc $(Symbol(:logpdf,D))(args...) = $(Symbol(:_logpdf,D))(args...)
+end
 
 
 end # module

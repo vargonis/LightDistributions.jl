@@ -1,30 +1,30 @@
 # Dirichlet
-struct Dirichlet{N, F<:Real, T<:AbstractVector{F}, P<:AbstractVector{F}} <: Distribution{T,P}
+struct Dirichlet{P<:Tuple{Vararg{Real}}} <: Distribution{AbstractVector{Real},P}
     params :: P
-    function Dirichlet{T}(params::AbstractVector) where T
-        isconcretetype(T) || error("Dirichlet: parameter T must be concrete")
-        T <: SVector && length(T) == length(params) || error("Dirichlet: inconsistent type and parameter length")
-        new{length(params), eltype(T), T, typeof(params)}(params)
-    end
+    Dirichlet(; p) = new{typeof(p)}(p)
 end
 
-Dirichlet{N}(α::Real) where N = Dirichlet{SVector{N,typeof(α)}}(SVector(ntuple(_->α, N)))
+# Dirichlet(α::Real...) = Dirichlet(α)
+# Dirichlet(α::Integer...) = Dirichlet(Float64.(α))
+# Dirichlet(n::Integer, α::Real)= Dirichlet(ntuple(_->α, n))
 
 
-function rand(d::Dirichlet{N,F,T}) where {N,F,T}
-    α = params(d)
-    p = rand.(T([Gamma{F}(α[i],one(F)) for i in 1:N]))
-    p / sum(p)
+function randDirichlet(α::T...) where T<:Real
+    p = SVector((αi -> randGamma(αi,one(T))).(α))
+    p ./ sum(p)
 end
+randDirichlet(α::Integer...) = randDirichlet(Float64.(α)...)
+randDirichlet(n::Integer, α::Real) = randDirichlet((α for _ in 1:n)...)
+randDirichlet(n::Integer, α::Integer) = randDirichlet(n, Float64(α))
 
-function dirichlet_logpdf(x::AbstractVector, α::AbstractVector)
+function logpdfDirichlet(x, α::Real...)
     a, b = sum(u -> SVector(u,loggamma(u)), α)
     s = sum(((u,v) -> (u-one(u))log(v)).(α, x))
-    s - b + loggamma(a)
+    s - b + lgamma(a)
 end
 
-function _dirichlet_logpdf(x::AbstractVector, α::AbstractVector)
-    a, b = sum(u -> SVector(u,CUDAnative.lgamma(u)), α)
+function _logpdfDirichlet(x, α::Real...)
+    a, b = sum(u -> SVector(u,lgamma(u)), α)
     s = sum(((u,v) -> (u-one(u))CUDAnative.log(v)).(α, x))
     s - b + CUDAnative.lgamma(a)
 end
