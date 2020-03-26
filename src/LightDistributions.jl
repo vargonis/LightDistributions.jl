@@ -5,6 +5,8 @@ using StatsFuns: poisinvcdf
 using StaticArrays
 using CUDAnative
 using CuArrays
+using MacroTools
+
 
 # TODO extend Base.rand instead of defining own random
 # import Base: rand
@@ -48,10 +50,15 @@ params(d::Distribution) = d.params
 # Distribution implementations
 ###############################
 
-function homogenize(t::Tuple)
-    T = promote_type(typeof(t).parameters...)
-    Tuple{Vararg{T}}(t)
-end
+# function homogenize(t::Tuple)
+#     T = promote_type(typeof(t).parameters...)
+#     Tuple{Vararg{T}}(t)
+# end
+#
+# function homogenize(s::Tuple, t::Tuple)
+#     T = promote_type(typeof(t).parameters..., typeof(t).parameters...)
+#     Tuple{Vararg{T}}(s), Tuple{Vararg{T}}(t)
+# end
 
 include("scalars.jl")
 include("arrays.jl")
@@ -61,10 +68,6 @@ for D in _distributions
     @eval logpdf(::Type{<:$D}) = $(Symbol(:logpdf,D))
     @eval sample(::Type{<:$D}) = $(Symbol(:rand, D))
     @eval random(d::$D) = $(Symbol(:rand, D))(d.params...)
-end
-
-for D in _distributions
-    @eval CuArrays.@cufunc $(Symbol(:logpdf,D))(args...) = $(Symbol(:_logpdf,D))(args...)
 end
 
 

@@ -26,7 +26,7 @@ end
 ##########################
 
 # Categorical
-function randCategorical(p::T...) where T<:Real
+function randCategorical(p::Tuple{Vararg{T}}) where T<:Real
     draw = rand(T)
     cp = zero(T)
     i = zero(Int)
@@ -37,16 +37,12 @@ function randCategorical(p::T...) where T<:Real
 end
 randCategorical(p::T...) where T<:Integer = randCategorical(Float64.(p)...)
 
-function logpdfCategorical(i::I, p_::Real...) where I<:Integer
-    p = homogenize(p_)
-    T = eltype(eltype(p))
-    ifelse(1 ≤ i ≤ length(p), @inbounds log(p[i]), -T(Inf))
-end
 
-function _logpdfCategorical(i::I, p_::Real...) where I<:Integer
-    p = homogenize(p_)
-    T = eltype(eltype(p))
-    ifelse(1 ≤ i ≤ length(p), @inbounds CUDAnative.log(p[i]), -T(Inf))
+@cufunc function logpdfCategorical(i::I, p::Tuple{Vararg{Real}}) where I<:Integer
+    # p = homogenize(p_) # a bit wasteful, only need to convert p[i]
+    # T = eltype(eltype(p))
+    T = promote_type(eltype.(p)...)
+    ifelse(1 ≤ i ≤ length(p), @inbounds log(T(p[i])), -T(Inf))
 end
 
 
@@ -54,16 +50,10 @@ end
 # TODO eliminar dependencia de StatsFuns:
 randPoisson(λ::Real) = convert(Int, poisinvcdf(λ, rand()))
 
-function logpdfPoisson(i::Integer, λ::T) where T<:Real
+@cufunc function logpdfPoisson(i::Integer, λ::T) where T<:Real
     x = convert(eltype(T), i)
     iszero(λ) && return ifelse(iszero(x), zero(T), -T(Inf))
     x * log(λ) - λ - lgamma(x + one(T))
-end
-
-function _logpdfPoisson(i::Integer, λ::T) where T<:Real
-    x = convert(eltype(T), i)
-    iszero(λ) && return ifelse(iszero(x), zero(T), -T(Inf))
-    x * CUDAnative.log(λ) - λ - CUDAnative.lgamma(x + one(T))
 end
 
 
@@ -71,14 +61,9 @@ end
 randUniform(a::T, b::T) where T<:Real = a + (b - a)rand(T)
 randUniform(a::T, b::T) where T<:Integer = Float64(a) + Float64(b - a)rand()
 
-function logpdfUniform(x_::Real, a_::Real, b_::Real)
+@cufunc function logpdfUniform(x_::Real, a_::Real, b_::Real)
     x, a, b = promote(x_, a_, b_)
     ifelse(a ≤ x ≤ b, -log(b - a), -typeof(x)(Inf))
-end
-
-function _logpdfUniform(x_::Real, a_::Real, b_::Real)
-    x, a, b = promote(x_, a_, b_)
-    ifelse(a ≤ x ≤ b, -CUDAnative.log(b - a), -typeof(x)(Inf))
 end
 
 
@@ -86,18 +71,11 @@ end
 randNormal(μ::T, σ::T) where T<:Real = μ + σ * randn(T)
 randNormal(μ::T, σ::T) where T<:Integer = Float64(μ) + Float64(σ) * randn()
 
-function logpdfNormal(x_::Real, μ_::Real, σ_::Real)
-    x, μ, σ = promote(x_, μ_, σ_)
+@cufunc function logpdfNormal(x_::Real, μ_::Real, σ_::Real)
+    x, m, s = promote(x_, μ_, σ_) # cannot use σ because the macro would transform that to CuArrays.cufunc(σ)
     T = eltype(x)
-    iszero(σ) && return ifelse(x == μ, T(Inf), -T(Inf))
-    -(((x - μ) / σ)^2 + T(log2π))/2 - log(σ)
-end
-
-function _logpdfNormal(x_::Real, μ_::Real, σ_::Real)
-    x, μ, σ = promote(x_, μ_, σ_)
-    T = eltype(x)
-    iszero(σ) && return ifelse(x == μ, T(Inf), -T(Inf))
-    -(((x - μ) / σ)^2 + T(log2π))/2 - CUDAnative.log(σ)
+    iszero(s) && return ifelse(x == m, T(Inf), -T(Inf))
+    -(((x - m) / s)^2 + T(log2π))/2 - log(s)
 end
 
 
@@ -105,14 +83,9 @@ end
 randExponential(λ::Real) = λ * randexp(eltype(λ))
 randExponential(λ::Integer) = λ * randexp()
 
-function logpdfExponential(x_::Real, λ_::Real)
+@cufunc function logpdfExponential(x_::Real, λ_::Real)
     x, λ = promote(x_, λ_)
     ifelse(x < zero(x), -eltype(x)(Inf), log(λ) - λ * x)
-end
-
-function _logpdfExponential(x_::Real, λ_::Real)
-    x, λ = promote(x_, λ_)
-    ifelse(x < zero(x), -eltype(x)(Inf), CUDAnative.log(λ) - λ * x)
 end
 
 
@@ -146,14 +119,8 @@ function randGamma(α::T, θ::T) where T<:Real
 end
 randGamma(α::T, θ::T) where T<:Integer = randGamma(Float64(α), Float64(θ))
 
-function logpdfGamma(x_::Real, α_::Real, θ_::Real)
+@cufunc function logpdfGamma(x_::Real, α_::Real, θ_::Real)
     x, α, θ = promote(x_, α_, θ_)
     T = eltype(x)
     -lgamma(α) - α*log(θ) + (α-one(T))log(x) - x/θ
-end
-
-function _logpdfGamma(x_::Real, α_::Real, θ_::Real)
-    x, α, θ = promote(x_, α_, θ_)
-    T = eltype(x)
-    -CUDAnative.lgamma(α) - α*CUDAnative.log(θ) + (α-one(T))CUDAnative.log(x) - x/θ
 end
