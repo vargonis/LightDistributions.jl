@@ -65,8 +65,8 @@ include("arrays.jl")
 
 for D in _distributions
     @eval params(::Type{<:$D}) = $(_params[D])
-    @eval logpdf(::Type{<:$D}) = $(Symbol(:logpdf,D))
-    @eval sample(::Type{<:$D}) = $(Symbol(:rand, D))
+    @eval logpdf(::Type{<:$D}) = $(Symbol(:logpdf,D)) # definirlo tb para instancias!
+    @eval sample(::Type{<:$D}) = $(Symbol(:rand, D)) # se puede llamar rand igual...
     @eval random(d::$D) = $(Symbol(:rand, D))(d.params...)
 end
 
