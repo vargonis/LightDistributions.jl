@@ -1,5 +1,5 @@
 # Dirichlet
-struct Dirichlet{P<:Tuple{Vararg{Real}}} <: Distribution{Tuple{Vararg{Real}},P}
+struct Dirichlet{P<:Tuple{Vararg{Real}}} <: Distribution #{Tuple{Vararg{Real}}}
     params :: P
     Dirichlet(; α) = new{typeof(α)}(α)
 end

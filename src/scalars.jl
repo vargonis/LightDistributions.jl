@@ -1,6 +1,6 @@
 # Discrete distributions
 for D in [:Categorical, :Poisson]
-    @eval struct $D{P<:$(_params[D].parameters[2])} <: Distribution{Integer,P}
+    @eval struct $D{P<:$(_params[D].parameters[2])} <: Distribution #{Integer}
         params :: P
         function $D(; kwargs...)
             params = Tuple(values(kwargs))
@@ -11,7 +11,7 @@ end
 
 # Continuous distributions
 for D in [:Uniform, :Normal, :Exponential, :Gamma]
-    @eval struct $D{P<:$(_params[D].parameters[2])} <: Distribution{Real,P}
+    @eval struct $D{P<:$(_params[D].parameters[2])} <: Distribution #{Real}
         params :: P
         function $D(; kwargs...)
             params = Tuple(values(kwargs))

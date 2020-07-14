@@ -34,15 +34,19 @@ const _params = (
 )
 
 export Distribution
-export sample, random, params, logpdf
+export random, params, logpdf
 for s in _distributions
     @eval export $s
 end
+export Mixture
 
-abstract type Distribution{T,P} end
+"""
+An abstract type for a distribution with parameters of type P and values of type T.
+"""
+abstract type Distribution end # Dropped parameter T because invariance means, for instance, that Distribution{Float64} <: Distribution{Real} does not hold; thus, it feels irrelevant.
 
-Base.eltype(::Distribution{T}) where T = T
-Base.eltype(::Type{<:Distribution{T}}) where T = T
+# Base.eltype(::Distribution{T}) where T = T
+# Base.eltype(::Type{<:Distribution{T}}) where T = T
 
 params(d::Distribution) = d.params
 
@@ -62,11 +66,13 @@ params(d::Distribution) = d.params
 
 include("scalars.jl")
 include("arrays.jl")
+include("constructions.jl")
 
 for D in _distributions
     @eval params(::Type{<:$D}) = $(_params[D])
-    @eval logpdf(::Type{<:$D}) = $(Symbol(:logpdf,D)) # definirlo tb para instancias!
-    @eval sample(::Type{<:$D}) = $(Symbol(:rand, D)) # se puede llamar rand igual...
+    @eval logpdf(::Type{<:$D}) = $(Symbol(:logpdf,D))
+    @eval logpdf(d::$D) = x -> $(Symbol(:logpdf,D))(x, d.params...)
+    @eval random(::Type{<:$D}) = $(Symbol(:rand, D))
     @eval random(d::$D) = $(Symbol(:rand, D))(d.params...)
 end
 
