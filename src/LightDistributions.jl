@@ -16,7 +16,10 @@ using MacroTools
 export Distribution, AbstractDistribution
 export support, params, random, logpdf
 
-for D in (:Categorical, :Poisson, :Uniform, :Normal, :Exponential, :Gamma, :Dirichlet)
+_scalars = (:Categorical, :Poisson, :Uniform, :Normal, :Exponential, :Gamma)
+_arrays = (:Dirichlet,)
+
+for D in _scalars ∪ _arrays
     @eval export $D
 end
 
@@ -29,7 +32,7 @@ export Mixture
 
 abstract type AbstractDistribution end
 
-logpdf(d) = x -> logpdf(typeof(d))(x, params(d)...)
+logpdf(d::AbstractDistribution) = x -> logpdf(typeof(d))(x, params(d)...)
 
 function support(D::Type{<:AbstractDistribution})
     D.parameters[1] # fallback definition, distributions for which this is not adequate must override
@@ -54,8 +57,8 @@ end
 
 include("specfuns.jl")
 
-for s in (:Categorical, :Poisson, :Uniform, :Normal, :Exponential, :Gamma)
-    @eval include("scalars/" * $(String(s)) * ".jl")
+for D in _scalars
+    @eval include("scalars/" * $(String(D)) * ".jl")
 end
 include("arrays/Dirichlet.jl")
 include("constructions.jl")
