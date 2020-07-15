@@ -6,7 +6,7 @@ end
 
 support(::Type{Mixture{NTuple{N,D},W}}) where {N,D,W} = support(D)
 
-@implement! Distribution{D,T} >: Distribution{Mixture{NTuple{N,D},W},T} where {N,D,W,T} begin
+@implement Distribution{D,T} >: Distribution{Mixture{NTuple{N,D},W},T} where {N,D,W,T} begin
     params(m::Mixture) = (weights = m.weights, params = map(params, m.distributions))
 
     function random(m::Mixture)
