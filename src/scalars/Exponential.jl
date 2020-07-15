@@ -1,4 +1,4 @@
-struct Exponential{T<:Real}
+struct Exponential{T<:Real} <: AbstractDistribution
     λ :: T
     function Exponential(λ::Real)
         T = typeof(λ)

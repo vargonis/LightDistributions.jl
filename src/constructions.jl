@@ -1,4 +1,5 @@
-struct Mixture{Ds <: NTuple, W}
+struct Mixture{Ds <: Tuple{Vararg{AbstractDistribution}},
+               W <: Tuple{Vararg{Real}}} <: AbstractDistribution
     weights :: W
     distributions :: Ds
 end

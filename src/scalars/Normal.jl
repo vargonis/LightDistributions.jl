@@ -1,4 +1,4 @@
-struct Normal{T<:Real}
+struct Normal{T<:Real} <: AbstractDistribution
     μ :: T
     σ :: T
     function Normal(μ::Real, σ::Real)

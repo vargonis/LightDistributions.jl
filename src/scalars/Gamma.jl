@@ -1,4 +1,4 @@
-struct Gamma{T<:Real}
+struct Gamma{T<:Real} <: AbstractDistribution
     α :: T
     θ :: T
     function Gamma(α::Real, θ::Real)

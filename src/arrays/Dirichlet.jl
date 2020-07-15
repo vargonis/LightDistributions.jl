@@ -1,4 +1,4 @@
-struct Dirichlet{N,T<:Real}
+struct Dirichlet{N,T<:Real} <: AbstractDistribution
     α :: NTuple{N,T}
     Dirichlet(α...) = new{length(α), eltype(α)}(α)
 end

@@ -1,4 +1,4 @@
-struct Poisson{T<:Real}
+struct Poisson{T<:Real} <: AbstractDistribution
     λ :: T
 end
 

@@ -13,7 +13,7 @@ using MacroTools
 # TODO extend Base.rand instead of defining own random
 # import Base: rand
 
-export Distribution
+export Distribution, AbstractDistribution
 export support, params, random, logpdf
 
 for D in (:Categorical, :Poisson, :Uniform, :Normal, :Exponential, :Gamma, :Dirichlet)
@@ -27,12 +27,14 @@ export Mixture
 # Distribution generalities
 ############################
 
+abstract type AbstractDistribution end
+
 logpdf(d) = x -> logpdf(typeof(d))(x, params(d)...)
 
-function support(D::DataType)
+function support(D::Type{<:AbstractDistribution})
     D.parameters[1] # fallback definition, distributions for which this is not adequate must override
 end
-support(d) = support(typeof(d))
+support(d::AbstractDistribution) = support(typeof(d))
 
 @trait Distribution{D, T} where {T = support(D)} begin
     params :: D => NamedTuple

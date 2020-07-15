@@ -1,4 +1,4 @@
-struct Categorical{N,T<:Real}
+struct Categorical{N,T<:Real} <: AbstractDistribution
     p :: NTuple{N,T}
 end
 Categorical(p...) = Categorical(p)

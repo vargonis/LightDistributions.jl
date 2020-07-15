@@ -1,4 +1,4 @@
-struct Uniform{T<:Real}
+struct Uniform{T<:Real} <: AbstractDistribution
     a :: T
     b :: T
     function Uniform(a::Real, b::Real)
