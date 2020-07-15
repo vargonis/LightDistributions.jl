@@ -1,7 +1,14 @@
-# Dirichlet
-struct Dirichlet{P<:Tuple{Vararg{Real}}} <: Distribution #{Tuple{Vararg{Real}}}
-    params :: P
-    Dirichlet(; α) = new{typeof(α)}(α)
+struct Dirichlet{N,T<:Real}
+    α :: NTuple{N,T}
+    Dirichlet(α...) = new{length(α), eltype(α)}(α)
+end
+
+support(::Type{<:Dirichlet{N,T}}) where {N,T} = NTuple{N,T}
+
+@implement Distribution{Dirichlet{N,T}, T} where {N,T} begin
+    params(d::Dirichlet) = (α=d.α,)
+    random(d::Dirichlet) = randDirichlet(d.α...)
+    logpdf(::Type{<:Dirichlet}) = logpdfDirichlet
 end
 
 # Dirichlet(α::Real...) = Dirichlet(α)
