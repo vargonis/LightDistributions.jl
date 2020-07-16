@@ -15,6 +15,6 @@ support(::Type{Mixture{NTuple{N,D},W}}) where {N,D,W} = support(D)
     end
 
     function logpdf(::Type{Mixture{Ds}}) where Ds
-        (x,ws,ps) -> sum(Tuple(w*logpdf(D)(x,p...) for (w,D,p) in zip(ws,Ds.parameters,ps)))
+        (x,ws,ps) -> sum(Tuple(w*logpdf(d)(x,p...) for (w,d,p) in zip(ws,Ds.parameters,ps)))
     end
 end
