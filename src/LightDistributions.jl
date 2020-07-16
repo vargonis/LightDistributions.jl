@@ -3,7 +3,6 @@ module LightDistributions
 using CanonicalTraits
 using Random
 using StatsFuns: poisinvcdf # Poisson
-# using StaticArrays
 
 using CUDAnative
 using CuArrays
@@ -17,7 +16,7 @@ export Distribution, AbstractDistribution
 export support, params, random, logpdf
 
 _scalars = (:Categorical, :Poisson, :Uniform, :Normal, :Exponential, :Gamma)
-_arrays = (:Dirichlet,)
+_arrays = (:Dirichlet, :NormalVector)
 
 for D in _scalars ∪ _arrays
     @eval export $D
@@ -60,7 +59,9 @@ include("specfuns.jl")
 for D in _scalars
     @eval include("scalars/" * $(String(D)) * ".jl")
 end
-include("arrays/Dirichlet.jl")
+for D in _arrays
+    @eval include("arrays/" * $(String(D)) * ".jl")
+end
 include("constructions.jl")
 
 
