@@ -1,3 +1,5 @@
+using MacroTools
+
 const log2π = log(2π)
 const _lgamma_cs = (0.99999999999980993,
                     676.5203681218851,

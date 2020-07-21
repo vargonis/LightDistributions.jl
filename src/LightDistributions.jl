@@ -2,11 +2,8 @@ module LightDistributions
 
 using CanonicalTraits
 using Random
-using StatsFuns: poisinvcdf # Poisson
-
 using CUDAnative
 using CuArrays
-using MacroTools
 
 
 # TODO extend Base.rand instead of defining own random
@@ -15,10 +12,19 @@ using MacroTools
 export Distribution, AbstractDistribution
 export support, params, random, logpdf
 
-_scalars = (:Categorical, :Poisson, :Uniform, :Normal, :Exponential, :Gamma)
-_arrays = (:Dirichlet, :NormalVector)
+_distributions = Dict(
+    :Categorical  => "scalar/discrete/bounded/Categorical.jl",
+    :Poisson      => "scalar/discrete/Poisson.jl",
+    :Uniform      => "scalar/continuous/bounded/Uniform.jl",
+    :Beta         => "scalar/continuous/bounded/Beta.jl",
+    :Normal       => "scalar/continuous/Normal.jl",
+    :Exponential  => "scalar/continuous/Exponential.jl",
+    :Gamma        => "scalar/continuous/Gamma.jl",
+    :Dirichlet    => "vector/bounded/Dirichlet.jl",
+    :NormalVector => "vector/NormalVector.jl",
+)
 
-for D in _scalars ∪ _arrays
+for D in keys(_distributions)
     @eval export $D
 end
 
@@ -56,11 +62,8 @@ end
 
 include("specfuns.jl")
 
-for D in _scalars
-    @eval include("scalars/" * $(String(D)) * ".jl")
-end
-for D in _arrays
-    @eval include("arrays/" * $(String(D)) * ".jl")
+for (_, path) in _distributions
+    @eval include($path)
 end
 include("constructions.jl")
 

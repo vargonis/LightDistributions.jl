@@ -1,3 +1,6 @@
+using StatsFuns: poisinvcdf
+
+
 struct Poisson{T<:Real} <: AbstractDistribution
     λ :: T
 end

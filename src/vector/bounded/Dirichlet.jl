@@ -1,4 +1,4 @@
-# Pasarse a StaticArrays, por consistencia
+# Pasarse a FixedPointNumbers?
 using StaticArrays
 
 
