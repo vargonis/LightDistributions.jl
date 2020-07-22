@@ -28,7 +28,7 @@ for D in keys(_distributions)
     @eval export $D
 end
 
-export Mixture
+export Mixture, Product
 
 
 ############################
