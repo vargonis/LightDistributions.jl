@@ -24,7 +24,7 @@ struct Product{Ds <: Tuple{Vararg{AbstractDistribution}}} <: AbstractDistributio
     distributions :: Ds
 end
 
-Product(ds...) = Product(ds)
+Product(ds::AbstractDistribution...) = Product(ds)
 support(::Type{Product{Ds}}) where Ds = Tuple{map(support, Ds.parameters)...}
 
 # @implement Distribution{Product{Ds},T} where {T = support(Product{Ds})} begin

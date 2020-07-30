@@ -11,8 +11,7 @@ struct Dirichlet{N,T<:Real} <: AbstractDistribution
     end
 end
 
-Dirichlet(α...) = Dirichlet(α)
-# Dirichlet(α::Real...) = Dirichlet(α)
+Dirichlet(α::Real...) = Dirichlet(α)
 # Dirichlet(α::Integer...) = Dirichlet(Float64.(α))
 # Dirichlet(n::Integer, α::Real)= Dirichlet(ntuple(_->α, n))
 
