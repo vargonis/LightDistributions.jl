@@ -4,7 +4,7 @@ using StaticArrays
 
 struct Dirichlet{N,T<:Real} <: AbstractDistribution
     α :: SVector{N,T}
-    function Dirichlet(α::Tuple{Vararg{Real}})
+    function Dirichlet(α)
         T = eltype(α)
         T <: Integer && (T = Float64)
         new{length(α),T}(α)
