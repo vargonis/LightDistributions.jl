@@ -1,7 +1,7 @@
 struct Categorical{N,T<:Real} <: AbstractDistribution
     p :: NTuple{N,T}
 end
-Categorical(p...) = Categorical(p)
+Categorical(p::Real...) = Categorical(p)
 
 support(::Type{<:Categorical}) = Int
 
