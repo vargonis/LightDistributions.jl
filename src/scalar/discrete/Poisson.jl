@@ -16,8 +16,8 @@ end
 # TODO eliminar dependencia de StatsFuns:
 randPoisson(λ::Real) = convert(Int, poisinvcdf(λ, rand()))
 
-@cufunc function logpdfPoisson(i::Integer, λ::T) where T<:Real
+@cufunc function logpdfPoisson(i::Integer, p::NamedTuple) where T<:Real
     x = convert(eltype(T), i)
-    iszero(λ) && return ifelse(iszero(x), zero(T), -T(Inf))
-    x * log(λ) - λ - lgamma(x + one(T))
+    iszero(p.λ) && return ifelse(iszero(x), zero(T), -T(Inf))
+    x * log(p.λ) - p.λ - lgamma(x + one(T))
 end

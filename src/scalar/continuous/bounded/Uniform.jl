@@ -17,7 +17,7 @@ end
 
 randUniform(a::T, b::T) where T = a + (b - a)rand(T)
 
-@cufunc function logpdfUniform(x_::Real, a_::Real, b_::Real)
-    x, a, b = promote(x_, a_, b_)
-    ifelse(a ≤ x ≤ b, -log(b - a), -typeof(x)(Inf))
+@cufunc function logpdfUniform(x::Real, p::NamedTuple)
+    x_, a_, b_ = promote(x, p.a, p.b)
+    ifelse(a_ ≤ x_ ≤ b_, -log(b_ - a_), -typeof(x_)(Inf))
 end

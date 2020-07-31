@@ -26,9 +26,9 @@ end
 
 randNormalVector(μ, σ) = μ + σ * randn(eltype(μ), length(μ))
 
-@cufunc function logpdfNormalVector(x, m, s) # cannot use σ because the macro would transform that to CuArrays.cufunc(σ)
-    T = promote_type(eltype(x), eltype(m), eltype(s))
-    t = s^(-1)
-    v = t * (x - m)
-    -(v⋅v + length(x)T(log2π))/2 - log(det(s))
+@cufunc function logpdfNormalVector(x, p::NamedTuple)
+    T = promote_type(eltype(x), eltype(p.μ), eltype(p.σ))
+    t = p.σ^(-1)
+    v = t * (x - p.μ)
+    -(v⋅v + length(x)T(log2π))/2 - log(det(p.σ))
 end

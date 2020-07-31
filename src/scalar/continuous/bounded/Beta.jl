@@ -10,7 +10,6 @@ struct Beta{T<:Real} <: AbstractDistribution
     end
 end
 
-
 @implement Distribution{Beta{T}, T} where T begin
     params(b::Beta) = (α=b.α, β=b.β)
     random(b::Beta) = randBeta(b.α, b.β)
@@ -23,8 +22,8 @@ function randBeta(α::T, β::T) where T
     p / (p + q)
 end
 
-@cufunc function logpdfBeta(x_::Real, α_::Real, β_::Real)
-    x, α, β = promote(x_, α_, β_)
-    T = eltype(x)
-    (α - one(T))log(x) + (β - one(T))log1p(-x) - lgamma(α) - lgamma(β) + lgamma(α + β)
+@cufunc function logpdfBeta(x::Real, p::NamedTuple)
+    x_, α_, β_ = promote(x, p.α, p.β)
+    T = eltype(x_)
+    (α_ - one(T))log(x_) + (β_ - one(T))log1p(-x_) - lgamma(α_) - lgamma(β_) + lgamma(α_ + β_)
 end

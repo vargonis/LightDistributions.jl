@@ -16,7 +16,7 @@ end
 
 randExponential(λ::T) where T = λ * randexp(T)
 
-@cufunc function logpdfExponential(x_::Real, λ_::Real)
-    x, λ = promote(x_, λ_)
-    ifelse(x < zero(x), -eltype(x)(Inf), log(λ) - λ * x)
+@cufunc function logpdfExponential(x::Real, p::NamedTuple)
+    x_, λ_ = promote(x, p.λ)
+    ifelse(x_ < zero(x_), -eltype(x_)(Inf), log(λ_) - λ_ * x_)
 end

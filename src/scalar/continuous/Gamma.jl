@@ -44,8 +44,8 @@ function randGamma(α::T, θ::T) where T<:Real
 end
 randGamma(α::T, θ::T) where T<:Integer = randGamma(Float64(α), Float64(θ))
 
-@cufunc function logpdfGamma(x_::Real, α_::Real, θ_::Real)
-    x, α, θ = promote(x_, α_, θ_)
-    T = eltype(x)
-    -lgamma(α) - α*log(θ) + (α-one(T))log(x) - x/θ
+@cufunc function logpdfGamma(x::Real, p::NamedTuple)
+    x_, α_, θ_ = promote(x, p.α, p.θ)
+    T = eltype(x_)
+    -lgamma(α_) - α_*log(θ_) + (α_-one(T))log(x_) - x_/θ_
 end

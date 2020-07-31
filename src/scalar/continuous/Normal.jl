@@ -17,9 +17,9 @@ end
 
 randNormal(μ::T, σ::T) where T = μ + σ * randn(T)
 
-@cufunc function logpdfNormal(x_::Real, μ_::Real, σ_::Real)
-    x, m, s = promote(x_, μ_, σ_) # cannot use σ because the macro would transform that to CuArrays.cufunc(σ)
-    T = eltype(x)
-    iszero(s) && return ifelse(x == m, T(Inf), -T(Inf))
-    -(((x - m) / s)^2 + T(log2π))/2 - log(s)
+@cufunc function logpdfNormal(x::Real, p::NamedTuple)
+    x_, μ_, σ_ = promote(x, p.μ, p.σ)
+    T = eltype(x_)
+    iszero(σ_) && return ifelse(x_ == μ_, T(Inf), -T(Inf))
+    -(((x_ - μ_) / σ_)^2 + T(log2π))/2 - log(σ_)
 end

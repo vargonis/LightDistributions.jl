@@ -34,16 +34,16 @@ randDirichlet(α::Tuple{Vararg{Integer}}) = randDirichlet(Float64.(α))
 randDirichlet(n::Integer, α::Real) = randDirichlet(Tuple(α for _ in 1:n))
 randDirichlet(n::Integer, α::Integer) = randDirichlet(n, Float64(α))
 
-@cufunc function logpdfDirichlet(x::SVector{N,<:Real}, α::SVector{N,<:Real}) where N
+@cufunc function logpdfDirichlet(x::SVector{N,T}, p::NamedTuple) where {N,T<:Real}
     # a, b = sum(u -> SVector(u,lgamma(u)), α)
     # s = sum(((u,v) -> (u-one(u))log(v)).(α, x))
     # s - b + lgamma(a)
-    T = promote_type(eltype(x), eltype(α))
-    a = b = s = zero(T)
-    for (xi, αi) in zip(x, α)
-        a += T(αi)
-        b += lgamma(T(αi))
-        s += (T(αi) - one(T))log(T(xi))
+    T_ = promote_type(T, eltype(p.α))
+    a = b = s = zero(T_)
+    for (xi, αi) in zip(x, p.α)
+        a += T_(αi)
+        b += lgamma(T_(αi))
+        s += (T_(αi) - one(T_))log(T_(xi))
     end
     s - b + lgamma(a)
 end
