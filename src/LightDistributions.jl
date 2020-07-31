@@ -37,17 +37,21 @@ export Mixture, Product
 
 abstract type AbstractDistribution end
 
-logpdf(d::AbstractDistribution) = x -> logpdf(typeof(d))(x, params(d)...)
+logpdf(d::Union{AbstractDistribution,AbstractArray}) = x -> logpdf(typeof(d))(x, params(d))
 
+# Not sure if it's a good idea to have this default:
 function support(D::Type{<:AbstractDistribution})
     D.parameters[1] # fallback definition, distributions for which this is not adequate must override
 end
 support(d::AbstractDistribution) = support(typeof(d))
+params(::Type{D}) where D<:AbstractDistribution = fieldnames(D)
 
 @trait Distribution{D, T} where {T = support(D)} begin
-    params :: D => NamedTuple
+    params :: D => Any
     random :: D => T
     logpdf :: Type{D} => Function
+    # Default implementation, declares all fields to be parameters:
+    params(d::D) = NamedTuple{fieldnames(D)}(Tuple(getproperty(d,p) for p in fieldnames(D)))
 end
 
 
