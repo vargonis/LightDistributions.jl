@@ -43,8 +43,11 @@ logpdf(d::Union{AbstractDistribution,AbstractArray}) = x -> logpdf(typeof(d))(x,
 function support(D::Type{<:AbstractDistribution})
     D.parameters[1] # fallback definition, distributions for which this is not adequate must override
 end
-support(d::AbstractDistribution) = support(typeof(d))
-params(::Type{D}) where D<:AbstractDistribution = fieldnames(D)
+support(d::Union{AbstractDistribution,AbstractArray,Tuple}) = support(typeof(d))
+# Esto era para poder presentar los parametros de una Mixture de manera mas tersa, pero eso no es tan sencillo de lograr de manera general:
+# params(::Type{D}) where D<:AbstractDistribution = fieldnames(D)
+# params(T::Type{<:Tuple}) = Tuple(params.(T.parameters))
+# params(T::Type{<:AbstractArray}) = (:params,) # creo....
 
 @trait Distribution{D, T} where {T = support(D)} begin
     params :: D => Any
