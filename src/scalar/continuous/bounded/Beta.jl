@@ -11,7 +11,6 @@ struct Beta{T<:Real} <: AbstractDistribution
 end
 
 @implement Distribution{Beta{T}, T} where T begin
-    params(b::Beta) = (α=b.α, β=b.β)
     random(b::Beta) = randBeta(b.α, b.β)
     logpdf(::Type{<:Beta}) = logpdfBeta
 end

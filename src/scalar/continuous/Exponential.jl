@@ -8,7 +8,6 @@ struct Exponential{T<:Real} <: AbstractDistribution
 end
 
 @implement Distribution{Exponential{T}, T} where T begin
-    params(e::Exponential) = (λ=e.λ,)
     random(e::Exponential) = randExponential(e.λ)
     logpdf(::Type{<:Exponential}) = logpdfExponential
 end

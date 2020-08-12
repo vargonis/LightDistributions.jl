@@ -9,7 +9,6 @@ Categorical(p::Real...) = Categorical(p)
 support(::Type{<:Categorical}) = Int
 
 @implement Distribution{Categorical{P}, Int} where P begin
-    params(c::Categorical) = (p=c.p,)
     random(c::Categorical) = randCategorical(c.p)
     logpdf(::Type{<:Categorical}) = logpdfCategorical
 end

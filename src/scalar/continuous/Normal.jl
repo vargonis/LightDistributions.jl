@@ -9,7 +9,6 @@ struct Normal{T<:Real} <: AbstractDistribution
 end
 
 @implement Distribution{Normal{T}, T} where T begin
-    params(n::Normal) = (μ=n.μ, σ=n.σ)
     random(n::Normal) = randNormal(n.μ, n.σ)
     logpdf(::Type{<:Normal}) = logpdfNormal
 end

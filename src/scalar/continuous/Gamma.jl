@@ -9,7 +9,6 @@ struct Gamma{T<:Real} <: AbstractDistribution
 end
 
 @implement Distribution{Gamma{T}, T} where T begin
-    params(g::Gamma) = (α=g.α, θ=g.θ)
     random(g::Gamma) = randGamma(g.α, g.θ)
     logpdf(::Type{<:Gamma}) = logpdfGamma
 end

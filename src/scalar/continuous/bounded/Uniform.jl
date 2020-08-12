@@ -9,7 +9,6 @@ struct Uniform{T<:Real} <: AbstractDistribution
 end
 
 @implement Distribution{Uniform{T}, T} where T begin
-    params(u::Uniform) = (a=u.a, b=u.b)
     random(u::Uniform) = randUniform(u.a, u.b)
     logpdf(::Type{<:Uniform}) = logpdfUniform
 end

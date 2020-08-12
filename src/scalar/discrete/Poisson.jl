@@ -8,7 +8,6 @@ end
 support(::Type{<:Poisson}) = Int
 
 @implement Distribution{Poisson{T}, Int} where T begin
-    params(p::Poisson) = (λ=p.λ,)
     random(p::Poisson) = randPoisson(p.λ)
     logpdf(::Type{<:Poisson}) = logpdfPoisson
 end

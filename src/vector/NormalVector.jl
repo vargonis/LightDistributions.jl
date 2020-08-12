@@ -18,7 +18,6 @@ end
 support(::Type{NormalVector{N,T}}) where {N,T} = SVector{N,T}
 
 @implement Distribution{NormalVector{N,T}, SVector{N,T}} where {N,T} begin
-    params(n::NormalVector) = (μ=n.μ, σ=n.σ)
     random(n::NormalVector) = randNormalVector(n.μ, n.σ)
     logpdf(::Type{<:NormalVector}) = logpdfNormalVector
 end
